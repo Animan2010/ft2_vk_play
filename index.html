@@ -5,8 +5,273 @@
        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
        <meta id="gameViewport" name="viewport" content="width=device-width initial-scale=1 shrink-to-fit=no user-scalable=no viewport-fit=cover">
        <link href="styles.css" rel="stylesheet" type="text/css">
-       <script src="https://yandex.ru/games/sdk/v2"></script>
+       <script type="text/javascript" src="//vkplay.ru/app/21868/static/mailru.core.js"></script>
 </head>
+
+<script>
+       (function apiHandshake(iframeApi) {
+               if (typeof iframeApi === 'undefined') {
+                   console.log('Cannot find iframeApi function, are we inside an iframe?');
+                   return;
+               }
+
+               var externalApi = null;
+
+               var callbacks = {
+                   appid: 21868,
+
+                   getLoginStatusCallback: function(status) {},
+                   userInfoCallback: function(info) {},
+                   userProfileCallback: function(profile) {},
+                   registerUserCallback: function(info) {},
+                   paymentFrameUrlCallback: function(url) {},
+                   getAuthTokenCallback: function(token) {},
+                   paymentReceivedCallback: function(data) {},
+                   paymentWindowClosedCallback: function() {},
+                   userConfirmCallback: function() {},
+                   paymentFrameItem: function(object) {},
+                   getGameInventoryItems: function() {},
+                   adsCallback: function(context) {
+                     if(context.type === 'adCompleted' && window.isShowedRewarded)
+                            window.OnRewardedVideoShown(true);
+                   }
+               };
+
+               function error(err) {
+                   throw new Error('Could not init external api ' + err);
+               }
+
+               function connected(api) {
+                   console.log('connected vk api');
+                   externalApi = api;
+                   window.externalApi = api;
+               }
+
+               iframeApi(callbacks).then(connected, error);
+       }(window.iframeApi));
+
+       const urlParams = new URLSearchParams(window.location.search);
+       const player_id = urlParams.get('viewer_id');
+       const userLang = urlParams.get('lang');
+
+       var player;
+
+       window.InitVkWebApp = function initVkWebApp() {
+              window.addEventListener('touchend', function() {
+                     window.initializedTouchEventForMusic = true;
+                     window.PlayBackgroundMusic();});
+              window.addEventListener('mousedown', function() {
+                     window.initializedTouchEventForMusic = true;
+                     window.PlayBackgroundMusic();});
+
+              window.LanguageCheck(userLang);
+              window.InitializeAfterYandexInit();
+
+              window.RateGame = function rateGame() {
+
+
+              }
+              window.ShowInterstitial = function showInterstitial() {
+                     window.isShowedRewarded = false;
+                     externalApi.showAds();
+                     /*ysdk.adv.showFullscreenAdv({
+                               callbacks: {
+                               onOpen: () => {
+                                   window.StopBackgroundMusic();
+                             },
+                               onClose: () => {
+                                   window.PlayBackgroundMusic();
+                             }
+                         }
+                     });*/
+              }
+              window.ShowRewarded = function showRewarded() {
+                     window.isShowedRewarded = true;
+                     config =
+                       {
+                           interstitial: false
+                       }
+                     externalApi.showAds(config);
+                     /*ysdk.adv.showRewardedVideo({
+                               callbacks: {
+                               onOpen: () => {
+                                   window.StopBackgroundMusic();
+                                 console.log('Video ad open.');
+                             },
+                               onRewarded: () => {
+                                 window.OnRewardedVideoShown(true);
+                             },
+                               onClose: () => {
+                                   window.PlayBackgroundMusic();
+                                 console.log('Video ad closed.');
+                             },
+                               onError: (e) => {
+                                 console.log('Error while open video ad:', e);
+                             }
+                         }
+                     });*/
+              }
+       }
+
+       window.BuyInApp = function buyInApp(inapp_id) {
+
+       }
+
+       window.GetKey = function getKey(key) {
+
+       }
+
+       window.SetKey = function setKey(k, v) {
+
+       }
+
+       window.CheckRewarded = function checkRewarded() {
+
+       }
+
+       window.CheckInterstitial = function checkInterstitial() {
+
+       }
+
+       window.ShareLevel = function shareLevel(lvl) {
+       }
+
+       window.SetRecord = function setRecord(lvl) {
+
+       }
+
+       window.InviteFriends = function inviteFriends() {
+
+       }
+
+       window.ShowRecords = function showRecords(lvl) {
+
+       }
+
+       window.musicSource = null;
+       window.playingMusic = false;
+       window.needResume = false;
+       window.musicState = false;
+       window.initializedTouchEventForMusic = false;
+       window.musicGame = "assets/music/GameTheme.mp3";
+       window.musicMenu = "assets/music/MenuTheme.mp3";
+       window.currentMusic = window.musicGame;
+
+       document.addEventListener("visibilitychange", function() {
+         if (document.visibilityState === 'visible') {
+              if(window.needResume) {
+                     window.needResume = false;
+                     window.PlayBackgroundMusic();
+              }
+         } else {
+              if(window.playingMusic) {
+                     window.needResume = true;
+                     window.StopBackgroundMusic();
+              }
+         }
+       });
+
+       window.StopBackgroundMusic = function() {
+              try {
+                     if(window.playingMusic) {
+                            window.playingMusic = false;
+                            window.musicSource.stop(0);
+                     }
+              } catch (e) {
+
+              }
+       }
+
+       window.SetMusicState = function setMusicState(v) {
+              window.musicState = v;
+              if(v)
+                     window.PlayBackgroundMusic();
+              else
+                     window.StopBackgroundMusic();
+       }
+
+       window.PlayBackgroundMusic = function() {
+                if(!window.initializedTouchEventForMusic)
+                     return;
+
+                if(!window.musicState)
+                     return;
+
+                if(window.playingMusic)
+                     return;
+                window.playingMusic = true;
+
+                try {
+                       if(window.musicSource != null) {
+                            window.musicSource.stop(0);
+                            window.musicSource.start(0);
+                            alert('resume music');
+                            return;
+                       }
+                } catch(e) {}
+
+
+                var context;
+                var request;
+                var source;
+
+                try {
+                  var AudioContext = window.AudioContext || window.webkitAudioContext;
+                  context = new AudioContext();
+                  var gainNode = context.createGain();
+                  gainNode.connect(context.destination);
+                  context.resume();
+                  request = new XMLHttpRequest();
+                  request.open("GET","assets/music/GameTheme.mp3",true);
+                  request.responseType = "arraybuffer";
+
+                  request.onload = function() {
+                    context.decodeAudioData(request.response, function(buffer) {
+                      if(!window.musicState) {
+                            window.playingMusic = false;
+                            return;
+                      }
+                      source = context.createBufferSource();
+                      source.buffer = buffer;
+                      source.looping = true;
+                      source.loop = true;
+                      source.connect(gainNode);
+                      gainNode.gain.value = 0.7;
+                      source.start(0);
+                      window.musicSource = source;
+                    });
+                  };
+
+                  request.send();
+
+                } catch(e) {
+                  alert('web audio api not supported');
+                }
+       }
+
+       function handleMouseDown(evt) {
+         evt.preventDefault();
+         evt.stopPropagation();
+         window.focus();
+         if(!window.initializedTouchEventForMusic) {
+              window.initializedTouchEventForMusic = true;
+              window.PlayBackgroundMusic();
+         }
+       }
+
+       function handleMouseUp(evt) {
+         evt.preventDefault();
+         evt.stopPropagation();
+         if(!window.initializedTouchEventForMusic) {
+              window.initializedTouchEventForMusic = true;
+              window.PlayBackgroundMusic();
+         }
+       }
+
+       document.addEventListener('contextmenu', event => event.preventDefault());
+       document.getElementById('embed-html').addEventListener('mousedown', handleMouseDown, false);
+       document.getElementById('embed-html').addEventListener('mouseup', handleMouseUp, false);
+</script>
 
 <body>
 <!--
@@ -14,239 +279,6 @@
 -->
 <div align="center" id="embed-html"></div>
 <script type="text/javascript" src="html/html.nocache.js"></script>
-
-<script type="module">
-
-              const urlParams = new URLSearchParams(window.location.search);
-              const player_id = urlParams.get('viewer_id');
-              const userLang = urlParams.get('lang');
-
-              var player;
-
-              window.InitVkWebApp = function initVkWebApp() {
-                     window.addEventListener('touchend', function() {
-                            window.initializedTouchEventForMusic = true;
-                            window.PlayBackgroundMusic();});
-                     window.addEventListener('mousedown', function() {
-                            window.initializedTouchEventForMusic = true;
-                            window.PlayBackgroundMusic();});
-
-                            // это для локального теста
-                            //window.LanguageCheck("rur");
-                            //window.InitializeAfterYandexInit();
-
-                     YaGames.init().then(ysdk => {
-                            window.LanguageCheck(ysdk.environment.i18n.lang);
-                            window.InitializeAfterYandexInit();
-                            ysdk.adv.showFullscreenAdv();
-                            console.log('Yandex SDK initialized');
-
-                            window.RateGame = function rateGame() {
-                                   ysdk.feedback.canReview()
-                                           .then(({ value, reason }) => {
-                                               if (value) {
-                                                   ysdk.feedback.requestReview()
-                                                       .then(({ feedbackSent }) => {
-                                                           console.log(feedbackSent);
-                                                       })
-                                               } else {
-                                                   console.log(reason)
-                                               }
-                                           })
-                            }
-                            window.ShowInterstitial = function showInterstitial() {
-                                   ysdk.adv.showFullscreenAdv({
-                                             callbacks: {
-                                             onOpen: () => {
-                                                 window.StopBackgroundMusic();
-                                           },
-                                             onClose: () => {
-                                                 window.PlayBackgroundMusic();
-                                           }
-                                       }
-                                   });
-                            }
-                            window.ShowRewarded = function showRewarded() {
-                                   ysdk.adv.showRewardedVideo({
-                                             callbacks: {
-                                             onOpen: () => {
-                                                 window.StopBackgroundMusic();
-                                               console.log('Video ad open.');
-                                           },
-                                             onRewarded: () => {
-                                               window.OnRewardedVideoShown(true);
-                                           },
-                                             onClose: () => {
-                                                 window.PlayBackgroundMusic();
-                                               console.log('Video ad closed.');
-                                           },
-                                             onError: (e) => {
-                                               console.log('Error while open video ad:', e);
-                                           }
-                                       }
-                                   });
-                            }
-                            });
-              }
-
-              window.BuyInApp = function buyInApp(inapp_id) {
-
-              }
-
-              window.GetKey = function getKey(key) {
-
-              }
-
-              window.SetKey = function setKey(k, v) {
-
-              }
-
-              window.CheckRewarded = function checkRewarded() {
-
-              }
-
-              window.CheckInterstitial = function checkInterstitial() {
-
-              }
-
-              window.ShareLevel = function shareLevel(lvl) {
-              }
-
-              window.SetRecord = function setRecord(lvl) {
-
-              }
-
-              window.InviteFriends = function inviteFriends() {
-
-              }
-
-              window.ShowRecords = function showRecords(lvl) {
-
-              }
-
-              window.musicSource = null;
-              window.playingMusic = false;
-              window.needResume = false;
-              window.musicState = false;
-              window.initializedTouchEventForMusic = false;
-              window.musicGame = "assets/music/GameTheme.mp3";
-              window.musicMenu = "assets/music/MenuTheme.mp3";
-              window.currentMusic = window.musicGame;
-
-              document.addEventListener("visibilitychange", function() {
-                if (document.visibilityState === 'visible') {
-                     if(window.needResume) {
-                            window.needResume = false;
-                            window.PlayBackgroundMusic();
-                     }
-                } else {
-                     if(window.playingMusic) {
-                            window.needResume = true;
-                            window.StopBackgroundMusic();
-                     }
-                }
-              });
-
-              window.StopBackgroundMusic = function() {
-                     try {
-                            if(window.playingMusic) {
-                                   window.playingMusic = false;
-                                   window.musicSource.stop(0);
-                            }
-                     } catch (e) {
-
-                     }
-              }
-
-              window.SetMusicState = function setMusicState(v) {
-                     window.musicState = v;
-                     if(v)
-                            window.PlayBackgroundMusic();
-                     else
-                            window.StopBackgroundMusic();
-              }
-
-              window.PlayBackgroundMusic = function() {
-                       if(!window.initializedTouchEventForMusic)
-                            return;
-
-                       if(!window.musicState)
-                            return;
-
-                       if(window.playingMusic)
-                            return;
-                       window.playingMusic = true;
-
-                       try {
-                              if(window.musicSource != null) {
-                                   window.musicSource.stop(0);
-                                   window.musicSource.start(0);
-                                   alert('resume music');
-                                   return;
-                              }
-                       } catch(e) {}
-
-
-                       var context;
-                       var request;
-                       var source;
-
-                       try {
-                         var AudioContext = window.AudioContext || window.webkitAudioContext;
-                         context = new AudioContext();
-                         var gainNode = context.createGain();
-                         gainNode.connect(context.destination);
-                         context.resume();
-                         request = new XMLHttpRequest();
-                         request.open("GET","assets/music/GameTheme.mp3",true);
-                         request.responseType = "arraybuffer";
-
-                         request.onload = function() {
-                           context.decodeAudioData(request.response, function(buffer) {
-                             if(!window.musicState) {
-                                   window.playingMusic = false;
-                                   return;
-                             }
-                             source = context.createBufferSource();
-                             source.buffer = buffer;
-                             source.looping = true;
-                             source.loop = true;
-                             source.connect(gainNode);
-                             gainNode.gain.value = 0.7;
-                             source.start(0);
-                             window.musicSource = source;
-                           });
-                         };
-
-                         request.send();
-
-                       } catch(e) {
-                         alert('web audio api not supported');
-                       }
-              }
-
-              function handleMouseDown(evt) {
-                evt.preventDefault();
-                evt.stopPropagation();
-                window.focus();
-                if(!window.initializedTouchEventForMusic) {
-                     window.initializedTouchEventForMusic = true;
-                     window.PlayBackgroundMusic();
-                }
-              }
-
-              function handleMouseUp(evt) {
-                evt.preventDefault();
-                evt.stopPropagation();
-                if(!window.initializedTouchEventForMusic) {
-                     window.initializedTouchEventForMusic = true;
-                     window.PlayBackgroundMusic();
-                }
-              }
-              document.addEventListener('contextmenu', event => event.preventDefault());
-              document.getElementById('embed-html').addEventListener('mousedown', handleMouseDown, false);
-              document.getElementById('embed-html').addEventListener('mouseup', handleMouseUp, false);
-       </script>
 
 </body>
 
